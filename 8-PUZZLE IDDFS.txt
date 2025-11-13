@@ -1,0 +1,62 @@
+#8 puzzle problem
+import copy
+
+def get_puzzle(name):
+    print(f"\nEnter the {name} puzzle (3x3, use -1 for blank):")
+    puzzle = []
+    for i in range(3):
+        row = list(map(int, input(f"Row {i+1} (space-separated 3 numbers): ").split()))
+        puzzle.append(row)
+    return puzzle
+
+def move(temp, movement):
+    for i in range(3):
+        for j in range(3):
+            if temp[i][j] == -1:
+                if movement == "up" and i > 0:
+                    temp[i][j], temp[i-1][j] = temp[i-1][j], temp[i][j]
+                elif movement == "down" and i < 2:
+                    temp[i][j], temp[i+1][j] = temp[i+1][j], temp[i][j]
+                elif movement == "left" and j > 0:
+                    temp[i][j], temp[i][j-1] = temp[i][j-1], temp[i][j]
+                elif movement == "right" and j < 2:
+                    temp[i][j], temp[i][j+1] = temp[i][j+1], temp[i][j]
+                return temp
+    return temp
+
+def dls(puzzle, depth, limit, last_move, goal):
+    if puzzle == goal:
+        return True, [puzzle], []
+
+    if depth >= limit:
+        return False, [], []
+
+    for move_dir, opposite in [("up","down"), ("left","right"), ("down","up"), ("right","left")]:
+        if last_move == opposite:
+            continue
+        temp = copy.deepcopy(puzzle)
+        new_state = move(temp, move_dir)
+        if new_state != puzzle:
+            found, path, moves = dls(new_state, depth+1, limit, move_dir, goal)
+            if found:
+                return True, [puzzle] + path, [move_dir] + moves
+    return False, [], []
+
+def ids(start, goal):
+    for limit in range(1, 50):
+        print(f"\nTrying depth limit = {limit}")
+        found, path, moves = dls(start, 0, limit, None, goal)
+        if found:
+            print("\nSolution found!")
+            for step in path:
+                print(step)
+            print("Moves:", moves)
+            print("Path cost =", len(path)-1)
+            return
+    print("\nSolution not found within depth limit.")
+
+start_puzzle = get_puzzle("start")
+goal_puzzle = get_puzzle("goal")
+
+print("\n~~~~~~~~~~~~ IDDFS ~~~~~~~~~~~~")
+ids(start_puzzle, goal_puzzle)

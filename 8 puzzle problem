@@ -1,0 +1,57 @@
+from heapq import heappush, heappop
+
+GOAL = (1,2,3,4,5,6,7,8,0)
+goal_pos = {v:(i//3,i%3) for i,v in enumerate(GOAL)}
+
+def h(state):  # Manhattan distance
+    return sum(abs(i//3-goal_pos[v][0])+abs(i%3-goal_pos[v][1])
+               for i,v in enumerate(state) if v)
+
+def nbrs(state):
+    z = state.index(0); r,c = divmod(z,3)
+    for dr,dc,m in [(-1,0,'Up'),(1,0,'Down'),(0,-1,'Left'),(0,1,'Right')]:
+        nr,nc = r+dr,c+dc
+        if 0<=nr<3 and 0<=nc<3:
+            s=list(state); nz=nr*3+nc
+            s[z],s[nz]=s[nz],s[z]
+            yield tuple(s),m
+
+def solvable(s):
+    arr=[x for x in s if x]
+    inv=sum(arr[i]>arr[j] for i in range(len(arr)) for j in range(i+1,len(arr)))
+    return inv%2==0
+
+def astar(start):
+    if not solvable(start): return None
+    open=[(h(start),start)]; g={start:0}; came={}
+    while open:
+        _,cur=heappop(open)
+        if cur==GOAL:
+            moves=[]
+            while cur in came: cur,m=came[cur]; moves.append(m)
+            return moves[::-1]
+        for nxt,m in nbrs(cur):
+            ng=g[cur]+1
+            if nxt not in g or ng<g[nxt]:
+                g[nxt]=ng; heappush(open,(ng+h(nxt),nxt)); came[nxt]=(cur,m)
+
+def show(s):
+    for i in range(0,9,3): print(*(x or '_' for x in s[i:i+3]))
+    print()
+
+if __name__=="__main__":
+    print("Enter the puzzle as 9 numbers (use 0 for blank), e.g.: 1 2 3 4 0 6 7 5 8")
+    nums = list(map(int, input("Input: ").split()))
+    start = tuple(nums)
+
+    print("\nStart:"); show(start); print("Goal:"); show(GOAL)
+    sol=astar(start)
+    if not sol: 
+        print("Not solvable!")
+    else:
+        print("Solved in",len(sol),"moves:",' -> '.join(sol))
+        state=start; show(state)
+        for m in sol:
+            for n,mv in nbrs(state):
+                if mv==m: state=n; break
+            print(m); show(state)

@@ -1,0 +1,68 @@
+
+import re
+from itertools import product
+
+def normalize_implications(expr):
+    expr = re.sub(r'([A-Za-z0-9_() ]+)\s*<->\s*([A-Za-z0-9_() ]+)',
+                  r'((\1) == (\2))', expr)
+    expr = re.sub(r'([A-Za-z0-9_() ]+)\s*->\s*([A-Za-z0-9_() ]+)',
+                  r'(((not (\1)) or (\2)))', expr)
+    return expr
+
+def evaluate(expr, model):
+    expr = expr.replace("~", " not ")
+    expr = expr.replace("&", " and ")
+    expr = expr.replace("|", " or ")
+    expr = normalize_implications(expr)
+    for symbol in sorted(model.keys(), key=len, reverse=True):
+        expr = re.sub(r'\b' + re.escape(symbol) + r'\b', str(model[symbol]), expr)
+    return eval(expr)
+
+def all_symbols(kb_sentences, query):
+    text = " ".join(kb_sentences + [query])
+    syms = set(re.findall(r'\b[A-Za-z][A-Za-z0-9_]*\b', text))
+    return sorted(syms)
+
+def truth_table_entailment(kb_sentences, query):
+    symbols = all_symbols(kb_sentences, query)
+    print("\nPropositional Symbols:", symbols)
+    models = list(product([True, False], repeat=len(symbols)))
+    header = symbols + ["KB True?", "Query"]
+    print("\n" + " | ".join(f"{h:^8}" for h in header))
+    print("-" * (11 * len(header)))
+
+    entails = True
+    counterexample = None
+
+    for vals in models:
+        model = dict(zip(symbols, vals))
+        kb_vals = [evaluate(s, model) for s in kb_sentences]
+        kb_true = all(kb_vals)
+        query_val = evaluate(query, model)
+        row = [str(model[s]) for s in symbols] + [str(kb_true), str(query_val)]
+        print(" | ".join(f"{c:^8}" for c in row))
+
+        if kb_true and not query_val:
+            entails = False
+            counterexample = model
+
+    if entails:
+        print("\n The query IS entailed by the Knowledge Base (KB ⊨ Query)")
+    else:
+        print("\n The query is NOT entailed by the Knowledge Base (KB ⊭ Query)")
+        print("Counterexample model (KB true but Query false):", counterexample)
+
+
+print("=== PROPOSITIONAL LOGIC ENTAILMENT CHECKER ===")
+n = int(input("Enter number of sentences in Knowledge Base (KB): "))
+
+kb = []
+for i in range(n):
+    kb.append(input(f"Enter sentence {i+1}: "))
+
+query = input("Enter the Query: ")
+
+print("\nKnowledge Base (KB):", kb)
+print("Query:", query)
+
+truth_table_entailment(kb, query)
