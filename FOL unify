@@ -1,0 +1,52 @@
+def is_variable(x):
+    return isinstance(x, str) and x[0].islower()
+
+def unify(x, y, substitutions=None):
+    if substitutions is None:
+        substitutions = {}
+
+    if x == y:
+        return substitutions
+
+    if is_variable(x):
+        return unify_var(x, y, substitutions)
+    elif is_variable(y):
+        return unify_var(y, x, substitutions)
+    elif isinstance(x, list) and isinstance(y, list) and len(x) == len(y):
+        for xi, yi in zip(x, y):
+            substitutions = unify(xi, yi, substitutions)
+            if substitutions is None:
+                return None
+        return substitutions
+    else:
+        return None
+
+def unify_var(var, x, substitutions):
+    if var in substitutions:
+        return unify(substitutions[var], x, substitutions)
+    elif x in substitutions:
+        return unify(var, substitutions[x], substitutions)
+    elif occurs_check(var, x, substitutions):
+        return None
+    else:
+        substitutions[var] = x
+        return substitutions
+
+def occurs_check(var, x, substitutions):
+    if var == x:
+        return True
+    elif is_variable(x) and x in substitutions:
+        return occurs_check(var, substitutions[x], substitutions)
+    elif isinstance(x, list):
+        return any(occurs_check(var, xi, substitutions) for xi in x)
+    return False
+
+# Example tests
+expr1 = ["Knows", "John", "x"]
+expr2 = ["Knows", "y", "Mary"]
+
+result = unify(expr1, expr2)
+
+print("Expression 1:", expr1)
+print("Expression 2:", expr2)
+print("Most General Unifier (MGU):", result)
