@@ -1,0 +1,55 @@
+from collections import deque
+
+def read_puzzle(prompt):
+    print(prompt)
+    rows = []
+    for i in range(1,4):
+        rows += list(map(int, input(f"Row {i} (space-separated 3 numbers): ").split()))
+    return tuple(rows)
+
+def show_state(state):
+    for i in range(0,9,3):
+        print(list(state[i:i+3]))
+    print()
+
+def neighbors(state):
+    idx = state.index(-1)
+    r, c = divmod(idx, 3)
+    moves = []
+    # order chosen so DFS explores right then down then left then up (adjustable)
+    for name, (dr, dc) in [('right',(0,1)), ('down',(1,0)), ('left',(0,-1)), ('up',(-1,0))]:
+        nr, nc = r+dr, c+dc
+        if 0 <= nr < 3 and 0 <= nc < 3:
+            nidx = nr*3 + nc
+            s = list(state)
+            s[idx], s[nidx] = s[nidx], s[idx]
+            moves.append((tuple(s), name))
+    return moves
+
+start = read_puzzle("Enter the start puzzle (3x3, use -1 for blank):")
+goal  = read_puzzle("Enter the goal puzzle (3x3, use -1 for blank):")
+
+print("\n~~~~~~~~~~~~~ DFS ~~~~~~~~~~~~~\n")
+
+# DFS using stack: (state, path_states, path_moves)
+stack = [(start, [start], [])]
+visited = set([start])
+found = False
+
+while stack:
+    state, path, moves = stack.pop()
+    if state == goal:
+        print("Solution found!\n")
+        for s in path:
+            show_state(s)
+        print("Moves:", moves)
+        print("Path cost =", len(moves))
+        found = True
+        break
+    for nxt, mname in neighbors(state):
+        if nxt not in visited:
+            visited.add(nxt)
+            stack.append((nxt, path + [nxt], moves + [mname]))
+
+if not found:
+    print("No solution found.")
