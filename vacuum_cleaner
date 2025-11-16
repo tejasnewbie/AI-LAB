@@ -1,25 +1,34 @@
-class VacuumCleaner:
-    def __init__(self):
-        self.location = 'A'
-        self.room = {'A': 'dirty', 'B': 'clean'}
+# Initial state
+location = 'A'
+room = {'A': 'dirty', 'B': 'clean'}
 
-    def clean(self):
-        print(f"Location A is {self.room['A']}, Location B is {self.room['B']}")
-        if self.room[self.location] == 'dirty':
-            print(f"Cleaning {self.location}...")
-            self.room[self.location] = 'clean'
-        if self.location == 'A':
-            self.location = 'B'
-        else:
-            self.location = 'A'
-        print(f"Moved to {self.location}")
-    
-    def is_clean(self):
-        return self.room['A'] == 'clean' and self.room['B'] == 'clean'
+def print_status():
+    print(f"Location A is {room['A']}, Location B is {room['B']}")
 
-vacuum = VacuumCleaner()
+def clean_room():
+    global location
 
-while not vacuum.is_clean():
-    vacuum.clean()
+    print_status()
+
+    # If current location is dirty → clean it
+    if room[location] == 'dirty':
+        print(f"Cleaning {location}...")
+        room[location] = 'clean'
+
+    # Move to the other room
+    if location == 'A':
+        location = 'B'
+    else:
+        location = 'A'
+
+    print(f"Moved to {location}")
+
+def is_clean():
+    return room['A'] == 'clean' and room['B'] == 'clean'
+
+
+# Main loop
+while not is_clean():
+    clean_room()
 
 print("Both rooms are clean!")
